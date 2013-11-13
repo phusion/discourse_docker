@@ -72,7 +72,7 @@ case "$command" in
 
       set_volumes
 
-      exec echo "$input" | docker run -cidfile $cidbootstrap -i -a stdin -a stdout -a stderr $volumes samsaffron/discourse /pups/bin/pups --stdin
+      exec echo "$input" | docker run -cidfile $cidbootstrap -i -a stdin -a stdout -a stderr $volumes samsaffron/discourse pups --stdin
       sleep 5
       docker commit `cat $cidbootstrap` samsaffron/discourse $config
       docker rm `cat $cidbootstrap` && rm $cidbootstrap
@@ -125,7 +125,7 @@ case "$command" in
 
            set_volumes
 
-           docker run -name $config -cidfile $cidfile $ports -d $volumes samsaffron/discourse:$config /usr/bin/runsvdir -P /etc/service
+           docker run -name $config -cidfile $cidfile $ports -d $volumes samsaffron/discourse /sbin/my_init
            exit 0
          else
            echo "cid found, ensuring container is started"

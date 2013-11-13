@@ -58,30 +58,6 @@ run:
         exec sudo -E -u discourse bundle exec sidekiq
 
   - file:
-     path: /etc/service/sshd/run
-     chmod: "+x"
-     contents: |
-        #!/bin/sh
-        exec 2>&1
-        exec /usr/sbin/sshd -D -e
-
-  - file:
-     path: /etc/service/redis/run
-     chmod: "+x"
-     contents: |
-        #!/bin/sh
-        exec 2>&1
-        exec sudo -u redis /usr/bin/redis-server /etc/redis/redis.conf
-
-  - file:
-     path: /etc/service/nginx/run
-     chmod: "+x"
-     contents: |
-        #!/bin/sh
-        exec 2>&1
-        exec /usr/sbin/nginx
-
-  - file:
      path: /etc/service/postgres/run
      chmod: "+x"
      contents: |
@@ -122,11 +98,6 @@ run:
         - "rm /etc/nginx/sites-enabled/default"
 
   - replace:
-      filename: /etc/nginx/nginx.conf
-      from: pid /run/nginx.pid;
-      to: daemon off;
-
-  - replace:
       filename: "/etc/nginx/conf.d/discourse.conf"
       from: /upstream[^\}]+\}/m
       to: "upstream discourse {
@@ -138,25 +109,11 @@ run:
       from: /server_name.+$/
       to: server_name _ ;
 
-  - replace:
-      filename: "/etc/redis/redis.conf"
-      from: "daemonize yes"
-      to: ""
-  - replace:
-      filename: "/etc/redis/redis.conf"
-      from: /^pidfile.*$/
-      to: ""
-
   - exec:
       cmd:
         - mkdir -p /shared/redis_data
         - chown -R redis /shared/redis_data
         - chgrp -R redis /shared/redis_data
-
-  - replace:
-      filename: "/etc/redis/redis.conf"
-      from: /^logfile.*$/
-      to: "logfile stdout"
 
   - replace:
       filename: "/etc/redis/redis.conf"
@@ -166,7 +123,7 @@ run:
   # we can not migrate without redis
   - exec:
       background: true
-      cmd: "sudo -u redis /usr/bin/redis-server /etc/redis/redis.conf"
+      cmd: "/etc/service/redis/run"
 
   - merge: $home/config/database.yml $database_yml
 
@@ -212,5 +169,5 @@ run:
         - chown -R discourse $home
         - sudo -E -u discourse bundle install --deployment
         - sudo -E -u discourse bundle exec rake db:migrate
-        - sudo -E -u discourse bundle exec rake assets:precompile
+        - sudo -E -u discourse bundle exec rake assets:precompile RAILS_GROUPS=assets
 
